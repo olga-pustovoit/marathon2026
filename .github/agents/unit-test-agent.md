@@ -1,5 +1,5 @@
 ---
-name: Restaurant Backend Test Agent
+name: Unit Test Agent
 description: Writes and maintains unit tests for the .NET restaurant backend in backend/restaurant-backend-app
 ---
 

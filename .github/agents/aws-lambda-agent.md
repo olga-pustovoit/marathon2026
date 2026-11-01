@@ -36,10 +36,6 @@ conventions.
      SystemTextJson.DefaultLambdaJsonSerializer)]`, `lambda_config.json`, `deployment_resources.json`;
       add the project to `restaurant-backend-app.sln`.
 3. Configuration and infrastructure:
-
-## Workflow
-
-3. Configuration and infrastructure:
     - Every new env var goes in the lambda's `lambda_config.json` env_variables (use `${Placeholder}`
       values from the Syndicate deploy config where the existing ones do) and is read from the environment
       in code, never hard-coded.
@@ -54,8 +50,7 @@ conventions.
       Never log secrets or tokens.
     - Use the AWS SDK for .NET clients already referenced in the csproj; add a package only if
       necessary, matching existing version style.
-5. Tests: add or update xUnit tests in `Tests/Handlers` or `Tests/Services` for new behaviour,
-   mirroring existing tests.
+5. Tests: do not write or modify unit tests.Only make sure existing tests still compile and pass.
 6. Docs: update `docs/ApiRoutes.md` for API changes and add a `CHANGELOG.md` entry if the file is
    maintained for similar changes.
 
@@ -65,7 +60,6 @@ Run from `backend/restaurant-backend-app`:
 
 ```powershell
 dotnet build restaurant-backend-app.sln
-dotnet test Tests/APIHandler.Tests.csproj
 ```
 
 Fix failures caused by your change. Don't run `syndicate deploy` or `syndicate update`, and don't
