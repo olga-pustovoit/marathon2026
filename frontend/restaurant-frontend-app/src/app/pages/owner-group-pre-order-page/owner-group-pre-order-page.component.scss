@@ -1,0 +1,217 @@
+@use 'app/shared/styles/abstracts/colors' as color;
+
+:host {
+  display: block;
+  min-height: 100vh;
+  background: color.$bg-yellow;
+}
+
+.owner-group-pre-order {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: 2rem 2.5rem 4rem;
+  color: color.$neutral-900;
+}
+
+.page-header,
+.section-heading,
+.participant-heading,
+.grand-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page-header {
+  margin-bottom: 1.5rem;
+
+  h1 {
+    margin: 0.7rem 0 0.35rem;
+    font-size: 2rem;
+  }
+}
+
+.back-link {
+  color: color.$green-600;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.page-subtitle,
+.address,
+.invite-card p,
+.empty-cart,
+.pending-note {
+  color: color.$neutral-700;
+}
+
+.reservation-card,
+.invite-card,
+.participant-card,
+.summary-card,
+.message-card {
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  border-radius: 16px;
+  background: color.$neutral-0;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 5%);
+}
+
+h2 {
+  margin: 0.35rem 0;
+  font-size: 1.35rem;
+}
+
+.eyebrow,
+.detail-label {
+  display: block;
+  color: color.$neutral-700;
+  font-size: 0.8rem;
+}
+
+.status-badge,
+.participant-status,
+.owner-label,
+.count-label {
+  display: inline-block;
+  padding: 0.35rem 0.65rem;
+  border-radius: 20px;
+  background: color.$green-300;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-badge--closed {
+  background: #eee9df;
+}
+
+.reservation-details {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+
+  strong {
+    display: block;
+    margin-top: 0.35rem;
+  }
+}
+
+.invite-link {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+
+  input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+  }
+}
+
+.participant-list {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.participant-card {
+  margin: 0;
+  padding: 1.25rem;
+}
+
+.participant-heading h3 {
+  margin: 0 0 0.5rem;
+}
+
+.owner-label {
+  margin-left: 0.4rem;
+}
+
+.participant-status {
+  background: #eee9df;
+}
+
+.participant-status--submitted {
+  background: color.$green-300;
+}
+
+.dish-list {
+  padding: 0;
+  margin: 1rem 0 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.65rem 0;
+    border-top: 1px solid #eee;
+  }
+}
+
+.grand-total {
+  padding-top: 1.25rem;
+  margin-top: 1rem;
+  border-top: 1px solid #ddd;
+  font-size: 1.1rem;
+}
+
+.pending-note {
+  font-size: 0.9rem;
+}
+
+.button {
+  padding: 0.75rem 1.1rem;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.button--primary {
+  color: white;
+  background: color.$green-600;
+}
+
+.button--secondary {
+  color: color.$neutral-900;
+  background: color.$green-300;
+}
+
+.submit-button {
+  width: 100%;
+  margin-top: 1.25rem;
+}
+
+.message-card--error {
+  color: #a22;
+}
+
+.message-card--success {
+  color: color.$green-600;
+}
+
+@media (max-width: 768px) {
+  .owner-group-pre-order {
+    padding: 1rem;
+  }
+
+  .page-header,
+  .invite-link {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .reservation-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

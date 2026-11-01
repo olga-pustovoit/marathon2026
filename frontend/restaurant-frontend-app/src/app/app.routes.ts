@@ -37,6 +37,15 @@ export const routes: Routes = [
     data: { authorized: true },
   },
   {
+    path: 'reservations/:reservationId/group-pre-order',
+    canActivate: [AuthGuard],
+    data: { authorized: true },
+    loadComponent: () =>
+      import('./pages/owner-group-pre-order-page/owner-group-pre-order-page.component').then(
+        (m) => m.OwnerGroupPreOrderPageComponent
+      ),
+  },
+  {
     path: 'waiter-reservations',
     component: WaiterDashboardComponent,
     canActivate: [AuthGuard],
@@ -91,9 +100,9 @@ export const routes: Routes = [
       {
         path: 'guest-pre-order-expired',
         loadComponent: () =>
-          import('./pages/guest-pre-order-expired-page/guest-pre-order-expired-page.component').then(
-            (m) => m.GuestPreOrderExpiredPageComponent
-          ),
+          import(
+            './pages/guest-pre-order-expired-page/guest-pre-order-expired-page.component'
+          ).then((m) => m.GuestPreOrderExpiredPageComponent),
       },
       {
         path: 'join/:token',

@@ -40,9 +40,11 @@ public class GuestSessionServiceTests
             _mockTableRepository.Object);
     }
     [Theory]
-    [InlineAutoData(0)]
-    [InlineAutoData(3)]
+    [InlineAutoData(5, 0)]
+    [InlineAutoData(5, 3)]
+    [InlineAutoData(2, 1)]
     public async Task CreateGuestSessionAsync_CorrectData_ReturnsSessionToken(
+        int reservationCapacity,
         int guestCount,
         CreateGuestSessionRequest request,
         GroupReservation groupReservation,
@@ -52,7 +54,7 @@ public class GuestSessionServiceTests
         groupReservation.Status = GroupReservationStatus.Open;
         groupReservation.ReservationId = parentReservation.Id;
 
-        parentReservation.GuestCount = 5;
+        parentReservation.GuestCount = reservationCapacity;
 
         _mockGroupReservationRepository
             .Setup(r => r.GetGroupReservationByIdAsync(groupReservation.GroupReservationId))
@@ -169,7 +171,7 @@ public class GuestSessionServiceTests
     }
 
     [Theory]
-    [InlineAutoData(0)]
+    [InlineAutoData(5, 0)]
     [InlineAutoData(-1)]
     public async Task AddDishAsync_ShouldThrowValidationException_WhenQuantityIsZeroOrLess(int quantity, string guestSessionId, Dish dish)
     {
@@ -368,9 +370,7 @@ public class GuestSessionServiceTests
             _guestSessionService.RemoveDishAsync(guestSessionId, dishId, 2));
     }
     [Theory]
-    [InlineAutoData(1, 0)]
     [InlineAutoData(1, 1)]
-    [InlineAutoData(2, 1)]
     [InlineAutoData(2, 2)]
     public async Task CreateGuestSessionAsync_WhenCapacityReached_ThrowsGuestLimitExceededException(
         int reservationCapacity,
@@ -580,7 +580,7 @@ public class GuestSessionServiceTests
         dish.State = state;
         guestSession.IsSubmitted = false;
         guestSession.GroupReservationId = groupReservation.GroupReservationId;
-        guestSession.Dishes = 
+        guestSession.Dishes =
         [
             new OrderItem()
             {

@@ -1,0 +1,212 @@
+<main class="owner-group-pre-order">
+  <header class="page-header">
+    <div>
+      <a class="back-link" href="/reservations">← My reservations</a>
+      <h1>Group Pre-Order</h1>
+      <p class="page-subtitle">Manage your group reservation and pre-orders.</p>
+    </div>
+
+    <button
+      type="button"
+      class="button button--secondary"
+      [disabled]="loading() || refreshing()"
+      (click)="refresh()"
+    >
+      {{ refreshing() ? 'Refreshing...' : 'Refresh' }}
+    </button>
+  </header>
+
+  @if (loading()) {
+    <section class="message-card" aria-live="polite">Loading group reservation...</section>
+  } @else if (error()) {
+    <section class="message-card message-card--error" role="alert">
+      <p>{{ error() }}</p>
+      <button type="button" class="button button--secondary" (click)="refresh()">Try again</button>
+    </section>
+  } @else if (invite(); as reservation) {
+    <section class="reservation-card">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Your reservation</span>
+          <h2>{{ reservation.RestaurantName }}</h2>
+        </div>
+
+        @if (status(); as groupStatus) {
+          <span class="status-badge" [class.status-badge--closed]="groupStatus.status !== 'Open'">
+            {{ groupStatus.status }}
+          </span>
+        }
+      </div>
+
+      <p class="address">{{ reservation.LocationAddress }}</p>
+
+      <div class="reservation-details">
+        <div>
+          <span class="detail-label">Date and time</span>
+          <strong>{{ reservation.StartTime | date: 'dd.MM.yyyy, HH:mm' }}</strong>
+        </div>
+
+        <div>
+          <span class="detail-label">Table</span>
+          <strong>{{ reservation.TableNumber }}</strong>
+        </div>
+
+        <div>
+          <span class="detail-label">Maximum guests</span>
+          <strong>{{ status()?.maxCapacity ?? reservation.MaxGuestCount }}</strong>
+        </div>
+
+        <div>
+          <span class="detail-label">Participants</span>
+          <strong>
+            {{ status()?.currentParticipants ?? participants().length }}
+            / {{ status()?.maxCapacity ?? reservation.MaxGuestCount }}
+          </strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="invite-card">
+      <div>
+        <h2>Invite your guests</h2>
+        <p>Share this link so your guests can join the group pre-order.</p>
+      </div>
+
+      <div class="invite-link">
+        <input aria-label="Guest invitation link" readonly [value]="inviteUrl()" />
+        <button type="button" class="button button--primary" (click)="copyInviteLink()">
+          Copy link
+        </button>
+      </div>
+    </section>
+
+    @if (successMessage()) {
+      <p class="message-card message-card--success" role="status">
+        {{ successMessage() }}
+      </p>
+    }
+
+    @if (submitError()) {
+      <p class="message-card message-card--error" role="alert">
+        {{ submitError() }}
+      </p>
+    }
+
+    @if (deleteError()) {
+      <p class="message-card message-card--error" role="alert">
+        {{ deleteError() }}
+      </p>
+    }
+
+    <section class="participants-section">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Group overview</span>
+          <h2>Participants</h2>
+        </div>
+        <span class="count-label">{{ participants().length }} people</span>
+      </div>
+
+      @if (participants().length === 0) {
+        <div class="message-card">
+          No participants yet. Share the invitation link to get started.
+        </div>
+      } @else {
+        <div class="participant-list">
+          @for (participant of participants(); track participant.id) {
+            <article class="participant-card">
+              <div class="participant-heading">
+                <div>
+                  <h3>
+                    {{ participant.name || 'Guest' }}
+                    @if (participant.id === ownerSessionId()) {
+                      <span class="owner-label">You · Owner</span>
+                    }
+                  </h3>
+                  <span
+                    class="participant-status"
+                    [class.participant-status--submitted]="participant.isSubmitted"
+                  >
+                    {{ participant.isSubmitted ? 'Submitted' : 'Not submitted' }}
+                  </span>
+                </div>
+
+                <strong>{{ participant.total | currency: '$' }}</strong>
+              </div>
+
+              @if (participant.id !== ownerSessionId()) {
+                <button
+                  type="button"
+                  class="button button--secondary"
+                  [disabled]="deletingGuestId() !== ''"
+                  (click)="deleteGuest(participant)"
+                >
+                  {{ deletingGuestId() === participant.id ? 'Removing...' : 'Remove guest' }}
+                </button>
+              }
+
+              @if (participant.items.length > 0) {
+                <ul class="dish-list">
+                  @for (item of participant.items; track item.dish.id) {
+                    <li>
+                      <span>{{ item.dish.name }} × {{ item.quantity }}</span>
+                      <span>{{ item.dish.price * item.quantity | currency: '$' }}</span>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="empty-cart">No dishes selected yet.</p>
+              }
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="summary-card">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Confirmed orders</span>
+          <h2>Group pre-order summary</h2>
+        </div>
+        <span class="count-label">{{ submittedParticipants().length }} submitted</span>
+      </div>
+
+      @if (consolidatedItems().length === 0) {
+        <p class="empty-cart">No submitted dishes yet.</p>
+      } @else {
+        <ul class="dish-list consolidated-list">
+          @for (item of consolidatedItems(); track item.dish.id) {
+            <li>
+              <span>{{ item.dish.name }} × {{ item.quantity }}</span>
+              <strong>{{ item.dish.price * item.quantity | currency: '$' }}</strong>
+            </li>
+          }
+        </ul>
+      }
+
+      <div class="grand-total">
+        <span>Confirmed total</span>
+        <strong>{{ consolidatedTotal() | currency: '$' }}</strong>
+      </div>
+
+      @if (pendingParticipants().length > 0) {
+        <p class="pending-note">
+          {{ pendingParticipants().length }} participant(s) have not submitted their order. Their
+          dishes are not included in the confirmed total.
+        </p>
+      }
+
+      <button
+        type="button"
+        class="button button--primary submit-button"
+        [disabled]="
+          status()?.status !== 'Open' || submittedParticipants().length === 0 || submitting()
+        "
+        (click)="submitGroupPreOrder()"
+      >
+        Submit Group Pre-Order
+      </button>
+    </section>
+  }
+</main>
