@@ -200,6 +200,15 @@ public class GroupReservationService(
                 "Only the reservation owner can submit the group pre-order.");
         }
 
+        var table = await tableRepository.GetTableAsync(reservation.TableId)
+            ?? throw new ValidationException("Associated table not found.");
+
+        var location = await locationService.GetLocationByIdAsync(table.LocationId)
+            ?? throw new ValidationException("Location not found for the reservation's table.");
+
+        var reservationTime =
+            $"{reservation.StartTime:MMM dd, yyyy, h:mm tt} - {reservation.EndTime:h:mm tt}";
+
         // 6. Verify owner session
         var sessions = await guestSessionRepository
             .GetAllByGroupReservationIdAsync(groupReservationId);
@@ -251,11 +260,13 @@ public class GroupReservationService(
                 "Invalid dish quantity in submitted guest sessions.");
         }
 
-        // 10. Update existing order
+        // 10. Create or update group order
         await orderService.SubmitGroupPreOrderAsync(
             userId,
             reservationId,
-            combinedDishes);
+            combinedDishes,
+            location.Address,
+            reservationTime);
 
         // 11. Mark group as submitted
         group.Status = GroupReservationStatus.Submitted;

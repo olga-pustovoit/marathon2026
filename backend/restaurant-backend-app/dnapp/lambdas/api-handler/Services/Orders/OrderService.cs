@@ -200,7 +200,9 @@ public class OrderService : IOrderService
     public async Task SubmitGroupPreOrderAsync(
         string customerId,
         string reservationId,
-        List<OrderItem> dishes)
+        List<OrderItem> dishes,
+        string reservationAddress,
+        string reservationTime)
     {
         var reservation = await LoadReservationAsync(reservationId);
 
@@ -213,6 +215,14 @@ public class OrderService : IOrderService
                 "You are not authorized to submit this group pre-order.");
         }
 
+        if (reservation.Status != ReservationStatus.Reserved)
+        {
+            throw new ValidationException(
+                "Group pre-order is allowed only for reservations in 'Reserved' status.");
+        }
+
+        EnsurePreOrderEditable(reservation.StartTime);
+
         if (dishes == null || dishes.Count == 0)
         {
             throw new ValidationException(
@@ -220,11 +230,25 @@ public class OrderService : IOrderService
         }
 
         var order = await _orderRepository.GetOrderByReservationIdAsync(reservationId);
+        var isNewOrder = order == null;
+
+        if (order != null && order.Status != OrderStatus.Created)
+        {
+            throw new ValidationException(
+                $"Group pre-order cannot update an order with status '{order.Status}'.");
+        }
 
         if (order == null)
         {
-            throw new ValidationException(
-                $"Order for reservation '{reservationId}' not found.");
+            order = new Order
+            {
+                OrderId = Guid.NewGuid().ToString(),
+                CustomerId = customerId,
+                ReservationId = reservationId,
+                ReservationAddress = reservationAddress,
+                ReservationTime = reservationTime,
+                Dishes = new List<OrderItem>()
+            };
         }
 
         order.Dishes = dishes.Select(d => new OrderItem
@@ -237,6 +261,14 @@ public class OrderService : IOrderService
         order.Status = OrderStatus.SubmittedByCustomer;
 
         await _orderRepository.SaveOrderAsync(order);
+
+        if (isNewOrder && !string.IsNullOrEmpty(reservation.WaiterId))
+        {
+            await _notificationService.CreateOrderNotificationAsync(
+                reservation.WaiterId,
+                order.OrderId,
+                order.ReservationId);
+        }
     }
 
     public async Task UnSubmitPreOrderAsync(string customerId, string reservationId, ILambdaContext context)
