@@ -36,3 +36,19 @@ crash.*.log
 # Environment-specific files
 .env.*
 !.env.example
+
+# Local sensitive/project-specific configuration
+.local/
+
+# Local Terraform variables
+infra/terraform/terraform.tfvars
+
+# Local Terraform backend configuration
+infra/terraform/backend.hcl
+
+# AWS local credentials
+.aws/
+**/credentials
+
+# Log files
+*.log
