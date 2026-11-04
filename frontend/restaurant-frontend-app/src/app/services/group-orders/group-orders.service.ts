@@ -1,11 +1,11 @@
-import { HttpClient, HttpContext } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, switchMap, map } from 'rxjs';
-import { Participant } from '@app/models/group-orders/participant.model';
+import { Observable, switchMap, map, catchError, of, throwError } from 'rxjs';
+import { Participant, ParticipantItem } from '@app/models/group-orders/participant.model';
+import { Order } from '@app/models/orders/order.model';
 import { SKIP_ERROR_TOAST } from '@app/auth/skip-error-toast.context';
 import { GroupSessionsResponse } from '@app/models/group-orders/group-sessions-response.model';
 import { GroupStatusResponse } from '@app/models/group-orders/group-status.model';
-import { OwnerSessionResponse } from '@app/models/group-orders/owner-session.model';
 import {
   SubmitGroupPreOrderRequest,
   SubmittedDish,
@@ -73,10 +73,12 @@ export class GroupOrdersService {
       );
   }
 
-  getOwnerSessionId$(reservationId: string): Observable<OwnerSessionResponse> {
-    return this.http.get<OwnerSessionResponse>(
-      `${this.baseUrl}/reservations/${encodeURIComponent(reservationId)}/guest-session-id`
-    );
+  getOwnerSessionId$(reservationId: string): Observable<string> {
+    return this.http
+      .get<{ guestSessionId: string }>(
+        `${this.baseUrl}/reservations/${encodeURIComponent(reservationId)}/guest-session-id`
+      )
+      .pipe(map((response) => response.guestSessionId));
   }
 
   getStatus$(
@@ -87,6 +89,16 @@ export class GroupOrdersService {
       `${this.baseUrl}/guest/groups/${encodeURIComponent(groupReservationId)}/status`,
       { context: this.createContext(options) }
     );
+  }
+
+  getReservationOrder$(reservationId: string): Observable<Order | null> {
+    return this.http
+      .get<Order>(`${this.baseUrl}/orders/${encodeURIComponent(reservationId)}`)
+      .pipe(
+        catchError((error: HttpErrorResponse) =>
+          error.status === 404 ? of(null) : throwError(() => error)
+        )
+      );
   }
 
   submit$(groupReservationId: string, reservationId: string): Observable<SubmittedDish[]> {
@@ -104,6 +116,16 @@ export class GroupOrdersService {
   ): Observable<GroupSessionsResponse> {
     return this.http.delete<GroupSessionsResponse>(
       `${this.baseUrl}/guest/groups/${encodeURIComponent(groupReservationId)}/sessions/${encodeURIComponent(guestSessionId)}`
+    );
+  }
+
+  removeParticipantDish$(
+    groupReservationId: string,
+    guestSessionId: string,
+    dishId: string
+  ): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}/guest/groups/${encodeURIComponent(groupReservationId)}/sessions/${encodeURIComponent(guestSessionId)}/dishes/${encodeURIComponent(dishId)}`
     );
   }
 

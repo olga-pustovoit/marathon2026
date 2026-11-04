@@ -1,116 +1,102 @@
 <div class="not-submitted-order">
-  <div class="content">
-    <div class="order">
-      <span class="body-bold">
-        Pre-order #{{ order().orderId }}
-        ({{ order().reservationAddress }}, {{ order().reservationTime }})
-      </span>
+  <article class="order-card">
+    <header class="order-header">
+      <div>
+        <span class="eyebrow">Your order</span>
+        <h3>Pre-order</h3>
+      </div>
+      <span class="order-status">Not submitted</span>
+    </header>
 
-      <div class="order-item">
-        @for (item of order().orderItems; track item.dish.id) {
-        <div class="order-item-dish">
+    <div class="reservation-info">
+      <div class="reservation-detail">
+        <span class="detail-label">Restaurant address</span>
+        <strong>{{ order().reservationAddress }}</strong>
+      </div>
+
+      <div class="reservation-detail">
+        <span class="detail-label">Reservation date & time</span>
+        <strong>{{ order().reservationTime }}</strong>
+      </div>
+    </div>
+
+    <div class="dish-list">
+      @for (item of order().orderItems; track item.dish.id) {
+        <div class="dish-row">
           <img
             class="dish-image"
-            [src]="item.dish.imageUrl"
+            [src]="item.dish.imageUrl || 'assets/img/dish.png'"
             [alt]="item.dish.name"
-            width="96"
-            height="96"
+            width="64"
+            height="64"
           />
 
-          <div class="container">
-            <div class="details">
-              <div class="dish-name">
-                <span class="body-bold">{{ item.dish.name }}</span>
-                  <span class="caption">Expected ready time – 10 minutes</span>
-                </div>
+          <div class="dish-info">
+            <strong class="dish-name">{{ item.dish.name }}</strong>
+            <span class="dish-caption">Expected ready time – 10 minutes</span>
+
+            <div class="dish-actions">
+              <div class="quantity-buttons">
+                <button
+                  type="button"
+                  class="quantity-button"
+                  [attr.aria-label]="'Decrease quantity of ' + item.dish.name"
+                  [disabled]="item.quantity <= 1"
+                  (click)="decrementItemQuantity(item.dish.id)"
+                >
+                  −
+                </button>
+
+                <span class="quantity-value">{{ item.quantity }}</span>
 
                 <button
                   type="button"
-                  class="icon-button icon-button--small"
-                  [attr.aria-label]="'Remove ' + item.dish.name"
-                  (click)="removeDishFromOrder(item.dish.id)"
+                  class="quantity-button"
+                  [attr.aria-label]="'Increase quantity of ' + item.dish.name"
+                  (click)="incrementItemQuantity(item.dish.id)"
                 >
-                  <img
-                    src="assets/svg/trash.svg"
-                    alt=""
-                    aria-hidden="true"
-                    width="24"
-                    height="24"
-                  />
+                  +
                 </button>
               </div>
 
-              <div class="quantity">
-                <div class="quantity-buttons">
-                  <button
-                    type="button"
-                    class="icon-button icon-button--small"
-                    aria-label="Decrease quantity"
-                    [disabled]="item.quantity <= 1"
-                    (click)="decrementItemQuantity(item.dish.id)"
-                  >
-                    <img
-                      src="assets/svg/minus-green.svg"
-                      alt=""
-                      aria-hidden="true"
-                      width="24"
-                      height="24"
-                    />
-                  </button>
+              <strong class="dish-price">
+                {{ item.dish.price * item.quantity | currency }}
+              </strong>
+            </div>
+          </div>
 
-                  <span class="value">{{ item.quantity }}</span>
-
-                  <button
-                    type="button"
-                    class="icon-button icon-button--small"
-                    aria-label="Increase quantity"
-                    (click)="incrementItemQuantity(item.dish.id)"
-                  >
-                    <img
-                      src="assets/svg/plus-green.svg"
-                      alt=""
-                      aria-hidden="true"
-                      width="24"
-                      height="24"
-                    />
-                  </button>
-                </div>
-
-                <span class="body-bold">
-        {{ item.dish.price * item.quantity | currency }}
-        </span>
-      </div>
-    </div>
-  </div>
-        }
-
-        <button
-          type="button"
-          class="button button--tertiary button--large add-dish-btn"
-          (click)="addDishToOrder()"
-        >
-          <img
-            src="assets/svg/plus-green.svg"
-            alt=""
-            aria-hidden="true"
-            width="24"
-            height="24"
-          />
-
-          Add dish
-        </button>
-      </div>
+          <button
+            type="button"
+            class="icon-button dish-remove-button"
+            [attr.aria-label]="'Remove ' + item.dish.name"
+            [title]="'Remove ' + item.dish.name"
+            (click)="removeDishFromOrder(item.dish.id)"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" />
+            </svg>
+          </button>
+        </div>
+      }
     </div>
 
-    <div class="total">
-      <span class="body-bold">Total payment</span>
-      <h2>{{ totalPrice() | currency }}</h2>
+    <button
+      type="button"
+      class="button button--secondary add-dish-button"
+      (click)="addDishToOrder()"
+    >
+      + Add dish
+    </button>
+
+    <div class="order-total">
+      <span>Total payment</span>
+      <strong>{{ totalPrice() | currency }}</strong>
     </div>
-  </div>
+  </article>
 
   <button
     type="button"
-    class="button button--primary button--large submit-btn"
+    class="button button--primary submit-button"
     (click)="submit()"
   >
     Submit Pre-order

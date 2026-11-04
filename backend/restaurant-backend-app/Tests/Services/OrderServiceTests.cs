@@ -568,6 +568,148 @@ public class OrderServiceTests
             _orderService.SubmitPreOrderAsync("cust-1", reservationId, _mockLambdaContext.Object));
     }
 
+    [Fact]
+    public async Task SubmitGroupPreOrderAsync_ShouldCreateOrder_WhenOrderDoesNotExist()
+    {
+        const string customerId = "cust-1";
+        const string reservationId = "res-1";
+        var reservation = new Reservation
+        {
+            Id = reservationId,
+            TableId = "table-1",
+            CustomerId = customerId,
+            WaiterId = "waiter-1",
+            StartTime = DateTime.UtcNow.AddHours(2),
+            EndTime = DateTime.UtcNow.AddHours(3),
+            Status = ReservationStatus.Reserved
+        };
+        _mockReservationRepository
+            .Setup(r => r.GetReservationByIdAsync(reservationId))
+            .ReturnsAsync(reservation);
+        _mockOrderRepository
+            .Setup(r => r.GetOrderByReservationIdAsync(reservationId))
+            .ReturnsAsync((Order?)null);
+
+        await _orderService.SubmitGroupPreOrderAsync(
+            customerId,
+            reservationId,
+            new List<OrderItem> { new() { DishId = "dish-1", Quantity = 1 } },
+            "1 Main Street",
+            "tomorrow");
+
+        _mockOrderRepository.Verify(r => r.SaveOrderAsync(It.Is<Order>(order =>
+            order.CustomerId == customerId &&
+            order.ReservationId == reservationId &&
+            order.ReservationAddress == "1 Main Street" &&
+            order.ReservationTime == "tomorrow" &&
+            order.Status == OrderStatus.SubmittedByCustomer &&
+            order.Dishes.Count == 1)), Times.Once);
+        _mockNotificationService.Verify(
+            s => s.CreateOrderNotificationAsync(
+                "waiter-1",
+                It.IsAny<string>(),
+                reservationId),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task SubmitGroupPreOrderAsync_ShouldUpdateExistingOrderAndSubmitIt()
+    {
+        const string customerId = "cust-1";
+        const string reservationId = "res-1";
+        var reservation = new Reservation
+        {
+            Id = reservationId,
+            TableId = "table-1",
+            CustomerId = customerId,
+            WaiterId = "waiter-1",
+            StartTime = DateTime.UtcNow.AddHours(2),
+            EndTime = DateTime.UtcNow.AddHours(3),
+            Status = ReservationStatus.Reserved
+        };
+        var order = new Order
+        {
+            OrderId = "order-1",
+            CustomerId = customerId,
+            ReservationId = reservationId,
+            ReservationAddress = "Old address",
+            ReservationTime = "Old time",
+            Dishes = [],
+            Status = OrderStatus.Created
+        };
+        var dishes = new List<OrderItem>
+        {
+            new() { DishId = "dish-1", Quantity = 3 }
+        };
+        _mockReservationRepository
+            .Setup(r => r.GetReservationByIdAsync(reservationId))
+            .ReturnsAsync(reservation);
+        _mockOrderRepository
+            .Setup(r => r.GetOrderByReservationIdAsync(reservationId))
+            .ReturnsAsync(order);
+
+        await _orderService.SubmitGroupPreOrderAsync(
+            customerId,
+            reservationId,
+            dishes,
+            "1 Main Street",
+            "tomorrow");
+
+        Assert.Equal(OrderStatus.SubmittedByCustomer, order.Status);
+        var submittedDish = Assert.Single(order.Dishes);
+        Assert.Equal("dish-1", submittedDish.DishId);
+        Assert.Equal(3, submittedDish.Quantity);
+        Assert.Equal(OrderItemState.Pending, submittedDish.State);
+        _mockOrderRepository.Verify(r => r.SaveOrderAsync(order), Times.Once);
+    }
+
+    [Fact]
+    public async Task RemoveGroupPreOrderDishAsync_ShouldRemoveDishFromOwnerOrder()
+    {
+        const string customerId = "cust-1";
+        const string reservationId = "res-1";
+        var reservation = new Reservation
+        {
+            Id = reservationId,
+            TableId = "table-1",
+            CustomerId = customerId,
+            WaiterId = "waiter-1",
+            StartTime = DateTime.UtcNow.AddHours(2),
+            EndTime = DateTime.UtcNow.AddHours(3),
+            Status = ReservationStatus.Reserved
+        };
+        var order = new Order
+        {
+            OrderId = "order-1",
+            CustomerId = customerId,
+            ReservationId = reservationId,
+            ReservationAddress = "1 Main Street",
+            ReservationTime = "tomorrow",
+            Dishes =
+            [
+                new OrderItem { DishId = "dish-1", Quantity = 1 },
+                new OrderItem { DishId = "dish-2", Quantity = 2 }
+            ],
+            Status = OrderStatus.Created
+        };
+        _mockReservationRepository
+            .Setup(r => r.GetReservationByIdAsync(reservationId))
+            .ReturnsAsync(reservation);
+        _mockOrderRepository
+            .Setup(r => r.GetOrderByReservationIdAsync(reservationId))
+            .ReturnsAsync(order);
+
+        var removed = await _orderService.RemoveGroupPreOrderDishAsync(
+            customerId,
+            reservationId,
+            "dish-1");
+
+        Assert.True(removed);
+        var remainingDish = Assert.Single(order.Dishes);
+        Assert.Equal("dish-2", remainingDish.DishId);
+        _mockOrderRepository.Verify(r => r.SaveOrderAsync(order), Times.Once);
+    }
+
     [Theory]
     [AutoData]
     public async Task UnSubmitPreOrderAsync_ShouldRevertOrderStatus_WhenValid(Reservation reservation, Order order)

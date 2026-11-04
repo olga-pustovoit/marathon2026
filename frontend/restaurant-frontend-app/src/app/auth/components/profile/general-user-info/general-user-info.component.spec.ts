@@ -48,9 +48,6 @@ describe('GeneralInformationComponent', () => {
   let readers: FileReader[];
   let images: HTMLImageElement[];
 
-  let readerResults: WeakMap<FileReader, string>;
-  let readerStates: WeakMap<FileReader, FileReader['readyState']>;
-
   beforeEach(async () => {
     auth = {
       user$: new BehaviorSubject<UserModel | null>(user),
@@ -77,33 +74,28 @@ describe('GeneralInformationComponent', () => {
 
     readers = [];
     images = [];
-    readerResults = new WeakMap();
-    readerStates = new WeakMap();
 
     // Control callbacks without reading or decoding real files.
-    spyOnProperty(FileReader.prototype, 'result', 'get')
-      .and.callFake(function (this: FileReader) {
-      return readerResults.get(this) ?? null;
-    });
-
-    spyOnProperty(FileReader.prototype, 'readyState', 'get')
-      .and.callFake(function (this: FileReader) {
-      return readerStates.get(this) ?? FileReader.EMPTY;
-    });
-
     readSpy = spyOn(
       FileReader.prototype,
       'readAsDataURL',
     ).and.callFake(function (this: FileReader) {
       readers.push(this);
-      readerStates.set(this, FileReader.LOADING);
+      Object.defineProperty(this, 'readyState', {
+        configurable: true,
+        value: FileReader.LOADING,
+      });
     });
+
 
     abortSpy = spyOn(
       FileReader.prototype,
       'abort',
     ).and.callFake(function (this: FileReader) {
-      readerStates.set(this, FileReader.DONE);
+      Object.defineProperty(this, 'readyState', {
+      configurable: true,
+      value: FileReader.DONE,
+    });
     });
 
     spyOnProperty(
@@ -172,8 +164,15 @@ describe('GeneralInformationComponent', () => {
     reader: FileReader,
     data = selectedImage,
   ): void {
-    readerResults.set(reader, data);
-    readerStates.set(reader, FileReader.DONE);
+    Object.defineProperty(reader, 'result', {
+      configurable: true,
+      value: data,
+    });
+
+    Object.defineProperty(reader, 'readyState', {
+      configurable: true,
+      value: FileReader.DONE,
+    });
 
     reader.onload?.call(
       reader,
@@ -184,11 +183,15 @@ describe('GeneralInformationComponent', () => {
   function completeImage(width = 200, height = 200): void {
     const image = images[images.length - 1];
 
-    spyOnProperty(image, 'naturalWidth', 'get')
-      .and.returnValue(width);
+    Object.defineProperty(image, 'naturalWidth', {
+      configurable: true,
+      value: width,
+    });
 
-    spyOnProperty(image, 'naturalHeight', 'get')
-      .and.returnValue(height);
+    Object.defineProperty(image, 'naturalHeight', {
+      configurable: true,
+      value: height,
+    });
 
     image.onload?.call(image, new Event('load'));
   }
@@ -384,7 +387,10 @@ describe('GeneralInformationComponent', () => {
     selectFile();
 
     const reader = readers[0];
-    readerStates.set(reader, FileReader.DONE);
+    Object.defineProperty(reader, 'readyState', {
+      configurable: true,
+      value: FileReader.DONE,
+    });
 
     reader.onerror?.call(
       reader,

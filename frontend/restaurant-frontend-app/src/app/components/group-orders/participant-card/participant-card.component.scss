@@ -1,0 +1,139 @@
+:host {
+  display: block;
+}
+
+.participant-card {
+  padding: 20px;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.participant-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0;
+    color: #292929;
+    font-size: 18px;
+    font-weight: 600;
+  }
+}
+
+.participant-status {
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border-radius: 20px;
+  background: #fff2d6;
+  color: #946200;
+  font-size: 12px;
+  font-weight: 600;
+
+  &.submitted {
+    background: #e4f5e9;
+    color: #287a43;
+  }
+}
+
+.dish-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dish-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  img {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+}
+
+.dish-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.dish-name {
+  color: #292929;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.dish-weight {
+  color: #888;
+  font-size: 12px;
+}
+
+.dish-quantity,
+.dish-price {
+  color: #555;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.empty-cart {
+  margin: 16px 0;
+  color: #888;
+  font-size: 14px;
+}
+
+.participant-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #eee;
+  color: #292929;
+  font-size: 14px;
+
+  strong {
+    font-size: 16px;
+  }
+}
+
+.remove-button {
+  margin-top: 14px;
+  padding: 8px 12px;
+  border: 1px solid #d9534f;
+  border-radius: 6px;
+  background: #fff;
+  color: #c0392b;
+  cursor: pointer;
+
+  &:hover {
+    background: #fff3f2;
+  }
+}
+
+@media (max-width: 480px) {
+  .participant-card {
+    padding: 14px;
+  }
+
+  .participant-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dish-item {
+    gap: 8px;
+  }
+}

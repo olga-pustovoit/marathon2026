@@ -1,50 +1,203 @@
 @use 'app/shared/styles/abstracts/colors' as color;
 
-.submitted-order-item {
-  gap: 16px;
-  padding-top: 16px;
-  padding-bottom: 16px;
-  border-top: 1px;
-  border-bottom: 1px;
-  border-right: 0;
-  border-left: 0;
-  border-color: color.$neutral-200;
-  border-style: solid;
+:host {
+  display: block;
+  width: 100%;
+}
+
+.submitted-order-card {
+  padding: 1.4rem 1.5rem;
+  border-radius: 16px;
+  background: color.$neutral-0;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 5%);
+}
+
+.order-header,
+.order-total,
+.dish-details,
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.order-header {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+
+  h3 {
+    margin: 0.35rem 0 0;
+    font-size: 1.2rem;
+  }
+}
+
+.eyebrow,
+.detail-label {
+  display: block;
+  color: color.$neutral-700;
+  font-size: 0.8rem;
+}
+
+.order-status {
+  padding: 0.35rem 0.65rem;
+  border-radius: 20px;
+  background: #e6f3e9;
+  color: color.$green-600;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.reservation-info {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #eee;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  strong {
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+  }
+}
+
+.dish-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dish-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.dish-image {
+  display: block;
+  width: 64px;
+  height: 64px;
+  flex: 0 0 64px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #f5f2eb;
+}
+
+.dish-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.dish-name {
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.dish-status {
+  width: fit-content;
+  padding: 0.2rem 0.5rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-pending {
+  background: #fff4d6;
+  color: #8a6100;
+}
+
+.status-confirmed {
+  background: #e6f3e9;
+  color: color.$green-600;
+}
+
+.status-rejected {
+  background: #fdebea;
+  color: #b3261e;
+}
+
+.status-unknown {
+  background: #eee;
+  color: #555;
+}
+
+.dish-details {
+  flex-wrap: wrap;
+  color: color.$neutral-700;
+  font-size: 0.85rem;
+
+  strong {
+    color: color.$neutral-900;
+    white-space: nowrap;
+  }
+}
+
+.order-total {
+  padding-top: 1.25rem;
+  margin-top: 1rem;
+  border-top: 1px solid #ddd;
+  font-size: 1rem;
+
+  strong {
+    font-size: 1.2rem;
+  }
 }
 
 .actions {
-  display: flex;
-  justify-content: end;
-  align-items: center;
-  gap: 16px;
+  margin-top: 1.25rem;
+
+  button {
+    flex: 1;
+  }
 }
 
-
-.text {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.button {
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
 }
 
-.order-item {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
+.button--primary {
+  color: white;
+  background: color.$green-600;
 }
 
-.body-bold {
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 24px;
-  letter-spacing: 0;
-  vertical-align: middle;
+.button--secondary {
+  color: color.$neutral-900;
+  background: color.$green-300;
 }
 
-.body {
-  font-weight: 300;
-  font-size: 14px;
-  line-height: 24px;
-  letter-spacing: 0;
-  vertical-align: middle;
+@media (max-width: 420px) {
+  .submitted-order-card {
+    padding: 1rem;
+  }
+
+  .dish-row {
+    gap: 0.5rem;
+  }
+
+  .dish-image {
+    width: 52px;
+    height: 52px;
+    flex-basis: 52px;
+  }
+
+  .actions {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
 }

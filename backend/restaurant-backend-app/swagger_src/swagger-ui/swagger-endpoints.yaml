@@ -479,6 +479,66 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /guest/groups/{groupReservationId}/sessions/{guestSessionId}/dishes/{dishId}:
+    delete:
+      tags:
+        - Guest Sessions
+      summary: Remove a dish from a group participant's order
+      description: Allows the reservation owner to remove one dish from a guest session or the owner's reservation order
+      operationId: removeGroupParticipantDish
+      parameters:
+        - name: groupReservationId
+          in: path
+          required: true
+          description: The ID of the group reservation
+          schema:
+            type: string
+        - name: guestSessionId
+          in: path
+          required: true
+          description: The participant's guest session ID
+          schema:
+            type: string
+        - name: dishId
+          in: path
+          required: true
+          description: The dish ID to remove
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dish removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Invalid request or dish not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Only the reservation owner can remove dishes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Group reservation, reservation, or session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /reservations/{reservationId}/guest-session-id:
     get:
       tags:

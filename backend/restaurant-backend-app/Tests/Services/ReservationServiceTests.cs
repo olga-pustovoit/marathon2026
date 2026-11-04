@@ -189,7 +189,9 @@ public class ReservationServiceTests
         // Act
         var result = await _reservationService.CreateReservationAsync(request, callerId, isWaiter: false, _mockLogger.Object);
 
-        _mockGroupReservationService.Verify(r => r.CreateGroupReservationAsync(It.IsAny<string>()));
+        _mockGroupReservationService.Verify(r => r.CreateGroupReservationAsync(
+            callerId,
+            It.IsAny<string>()));
     }
 
     [Theory, AutoData]
@@ -231,7 +233,9 @@ public class ReservationServiceTests
         // Act
         var result = await _reservationService.CreateReservationAsync(request, callerId, isWaiter: false, _mockLogger.Object);
 
-        _mockGroupReservationService.Verify(r => r.CreateGroupReservationAsync(It.IsAny<string>()), Times.Never);
+        _mockGroupReservationService.Verify(r => r.CreateGroupReservationAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>()), Times.Never);
     }
 
     [Theory, AutoData]

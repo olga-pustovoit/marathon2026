@@ -1180,30 +1180,45 @@ Response: 200 OK
 ```
 
 ### `POST` /group-reservations/{groupReservationId}/submit
-Response: 200 OK
+Request body:
 ```json
 {
-  "message": "Group reservation pre-order submitted successfully."
+  "reservationId": "string"
 }
 ```
-
-### `GET` /guest/groups/{groupReservationId}/sessions
-Response: 200 OK
+Response: `200 OK`
 ```json
 [
   {
-    "id": "string",
-    "groupReservationId": "string",
-    "guestName": "string",
-    "status": "string"
+    "dishId": "string",
+    "quantity": 2
   }
 ]
 ```
 
-### `DELETE` /guest/groups/{groupReservationId}/sessions/{guestSessionId}
-Response: 200 OK
+### `GET` /guest/groups/{groupReservationId}/sessions
+Response: `200 OK`
 ```json
 {
-  "message": "Guest session removed from group successfully."
+  "participants": [],
+  "total": 0
+}
+```
+
+### `DELETE` /guest/groups/{groupReservationId}/sessions/{guestSessionId}
+Response: `200 OK`
+```json
+{
+  "participants": [],
+  "total": 0
+}
+```
+
+### `DELETE` /guest/groups/{groupReservationId}/sessions/{guestSessionId}/dishes/{dishId}
+Owner-only. Removes the selected dish from a participant's session or the owner's reservation order.
+Response: `200 OK`
+```json
+{
+  "message": "Dish removed from participant order."
 }
 ```

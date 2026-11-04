@@ -1,0 +1,171 @@
+:host {
+  display: block;
+  min-height: 100%;
+  background: #f7f8f6;
+  color: #26352d;
+}
+
+.group-order-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 24px 56px;
+}
+
+.page-header,
+.reservation-heading,
+.section-heading,
+.total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-header {
+  margin-bottom: 28px;
+}
+
+h1 {
+  margin: 6px 0;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+h2 {
+  margin: 6px 0;
+  font-size: 21px;
+}
+
+.subtitle,
+.address,
+.date {
+  color: #68766d;
+}
+
+.eyebrow {
+  color: #78917e;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.status-badge,
+.guest-count,
+.participant-count {
+  padding: 8px 13px;
+  border-radius: 20px;
+  background: #e8f1e9;
+  color: #39714a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.reservation-card,
+.summary-card {
+  margin-bottom: 28px;
+  padding: 24px;
+  border: 1px solid #e7ebe7;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.address {
+  margin: 16px 0 6px;
+}
+
+.date {
+  margin: 0;
+}
+
+.participants-section {
+  margin-bottom: 28px;
+}
+
+.section-heading {
+  margin-bottom: 18px;
+}
+
+.participant-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.total-row {
+  padding-top: 20px;
+  border-top: 1px solid #e7ebe7;
+  font-size: 17px;
+}
+
+.total-row strong {
+  font-size: 24px;
+  color: #39714a;
+}
+
+@media (max-width: 700px) {
+  .group-order-page {
+    padding: 20px 14px 36px;
+  }
+
+  .participant-list {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+.pending-banner {
+  margin-bottom: 22px;
+  padding: 16px 20px;
+  border: 1px solid #f0d78c;
+  border-radius: 10px;
+  background: #fff7dc;
+  color: #795d16;
+  font-size: 14px;
+}
+
+.consolidated-list {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+}
+
+.consolidated-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.submit-button {
+  margin-top: 22px;
+  padding: 13px 22px;
+  border: 0;
+  border-radius: 8px;
+  background: #39714a;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modal-actions button {
+  margin-left: 10px;
+  padding: 10px 18px;
+  border: 1px solid #d9dfd9;
+  border-radius: 7px;
+  background: white;
+  cursor: pointer;
+}

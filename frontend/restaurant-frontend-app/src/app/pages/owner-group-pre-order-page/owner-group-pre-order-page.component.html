@@ -116,46 +116,87 @@
           @for (participant of participants(); track participant.id) {
             <article class="participant-card">
               <div class="participant-heading">
-                <div>
-                  <h3>
-                    {{ participant.name || 'Guest' }}
-                    @if (participant.id === ownerSessionId()) {
-                      <span class="owner-label">You · Owner</span>
-                    }
-                  </h3>
+                <div class="participant-title">
+                  <h3>{{ participant.name || 'Guest' }}</h3>
+
+                  @if (participant.id === ownerSessionId()) {
+                    <span class="owner-label">You · Owner</span>
+                  }
+
                   <span
                     class="participant-status"
-                    [class.participant-status--submitted]="participant.isSubmitted"
+                    [class.participant-status--submitted]="isParticipantSubmitted(participant)"
                   >
-                    {{ participant.isSubmitted ? 'Submitted' : 'Not submitted' }}
+                    {{ isParticipantSubmitted(participant) ? 'Submitted' : 'Not submitted' }}
                   </span>
                 </div>
 
-                <strong>{{ participant.total | currency: '$' }}</strong>
+                @if (participant.id !== ownerSessionId() && participant.type !== 'Owner' && status()?.status === 'Open') {
+                  <button
+                    type="button"
+                    class="button button--remove-guest"
+                    [disabled]="deletingGuestId() !== '' || deletingDishKey() !== ''"
+                    (click)="deleteGuest(participant)"
+                  >
+                    {{ deletingGuestId() === participant.id ? 'Removing...' : 'Remove Guest' }}
+                  </button>
+                }
               </div>
 
-              @if (participant.id !== ownerSessionId()) {
-                <button
-                  type="button"
-                  class="button button--secondary"
-                  [disabled]="deletingGuestId() !== ''"
-                  (click)="deleteGuest(participant)"
-                >
-                  {{ deletingGuestId() === participant.id ? 'Removing...' : 'Remove guest' }}
-                </button>
-              }
-
-              @if (participant.items.length > 0) {
+              @if (participantItems(participant).length > 0) {
                 <ul class="dish-list">
-                  @for (item of participant.items; track item.dish.id) {
-                    <li>
-                      <span>{{ item.dish.name }} × {{ item.quantity }}</span>
-                      <span>{{ item.dish.price * item.quantity | currency: '$' }}</span>
+                  @for (item of participantItems(participant); track item.dish.id) {
+                    <li class="dish-row">
+                      @if (status()?.status === 'Open') {
+                        <button
+                          type="button"
+                          class="icon-button icon-button--small dish-remove-button"
+                          [attr.aria-label]="'Remove ' + item.dish.name"
+                          [title]="'Remove ' + item.dish.name"
+                          [disabled]="deletingGuestId() !== '' || deletingDishKey() !== ''"
+                          (click)="removeDish(participant, item)"
+                        >
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" />
+                          </svg>
+                        </button>
+                      }
+
+                      @if (item.dish.imageUrl) {
+                        <img
+                          class="dish-image"
+                          [src]="item.dish.imageUrl"
+                          [alt]="item.dish.name"
+                          loading="lazy"
+                        />
+                      } @else {
+                        <div class="dish-image dish-image--placeholder" aria-hidden="true">
+                          <span>🍽</span>
+                        </div>
+                      }
+
+                      <div class="dish-info">
+                        <span class="dish-name">{{ item.dish.name }}</span>
+                        <small>Quantity: {{ item.quantity }}</small>
+                      </div>
+
+                      <strong class="dish-price">
+                        {{ item.dish.price * item.quantity | currency: '$' }}
+                      </strong>
                     </li>
                   }
                 </ul>
+
+                <div class="participant-subtotal">
+                  <span>Subtotal</span>
+                  <strong>{{ participantTotal(participant) | currency: '$' }}</strong>
+                </div>
               } @else {
                 <p class="empty-cart">No dishes selected yet.</p>
+                <div class="participant-subtotal">
+                  <span>Subtotal</span>
+                  <strong>{{ 0 | currency: '$' }}</strong>
+                </div>
               }
             </article>
           }
@@ -201,11 +242,17 @@
         type="button"
         class="button button--primary submit-button"
         [disabled]="
-          status()?.status !== 'Open' || submittedParticipants().length === 0 || submitting()
+          status()?.status !== 'Open' || consolidatedItems().length === 0 || submitting()
         "
         (click)="submitGroupPreOrder()"
       >
-        Submit Group Pre-Order
+        @if (submitting()) {
+          Submitting...
+        } @else if (status()?.status === 'Submitted') {
+          Submitted
+        } @else {
+          Submit Group Pre-Order
+        }
       </button>
     </section>
   }

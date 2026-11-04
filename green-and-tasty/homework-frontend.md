@@ -71,7 +71,7 @@ http://localhost:4200/reservations/demo-reservation/group-order?demo
 **Ендпоінти** (у dev на `demo-reservation` відповідає мок):
 - `GET /reservations/{reservationId}/invite-token` → `GET /guest/invites/{token}` — уже є в `GuestInviteService`. З відповіді беремо `GroupReservationId` і дані для шапки;
 - **`GET /guest/groups/{groupReservationId}/sessions`** — учасники та їхні кошики;
-- **`GET /reservations/{reservationId}/guest-session-id`** — id власної сесії Owner;
+- **`GET /reservations/{reservationId}/guest-session-id`** — id власної сесії Owner;в 
 - `GET /guest/groups/{groupReservationId}/status` — статус групи (`Open` / `Submitted` / `Closed`);
 - **`POST /group-reservations/{groupReservationId}/submit`**, тіло `{ "reservationId": "…" }`.
 

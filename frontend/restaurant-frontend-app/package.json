@@ -22,7 +22,8 @@
     "test": "ng test",
     "lint": "ng lint",
     "lint-fix": "ng lint --fix",
-    "format": "prettier --write \"src/**/*.{ts,html,scss}\""
+    "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
+    "test:hw": "ng test --watch=false"
   },
   "private": true,
   "engines": {

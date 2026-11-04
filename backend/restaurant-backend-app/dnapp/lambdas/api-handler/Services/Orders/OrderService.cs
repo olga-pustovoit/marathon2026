@@ -230,26 +230,24 @@ public class OrderService : IOrderService
         }
 
         var order = await _orderRepository.GetOrderByReservationIdAsync(reservationId);
-        var isNewOrder = order == null;
-
-        if (order != null && order.Status != OrderStatus.Created)
+        var isNewOrder = order is null;
+        if (order != null &&
+            order.Status != OrderStatus.Created &&
+            order.Status != OrderStatus.SubmittedByCustomer)
         {
             throw new ValidationException(
                 $"Group pre-order cannot update an order with status '{order.Status}'.");
         }
 
-        if (order == null)
+        order ??= new Order
         {
-            order = new Order
-            {
-                OrderId = Guid.NewGuid().ToString(),
-                CustomerId = customerId,
-                ReservationId = reservationId,
-                ReservationAddress = reservationAddress,
-                ReservationTime = reservationTime,
-                Dishes = new List<OrderItem>()
-            };
-        }
+            OrderId = Guid.NewGuid().ToString(),
+            CustomerId = customerId,
+            ReservationId = reservationId,
+            ReservationAddress = reservationAddress,
+            ReservationTime = reservationTime,
+            Dishes = []
+        };
 
         order.Dishes = dishes.Select(d => new OrderItem
         {
@@ -269,6 +267,42 @@ public class OrderService : IOrderService
                 order.OrderId,
                 order.ReservationId);
         }
+    }
+
+    public async Task<bool> RemoveGroupPreOrderDishAsync(
+        string customerId,
+        string reservationId,
+        string dishId)
+    {
+        var reservation = await LoadReservationAsync(reservationId);
+        if (!string.Equals(
+            reservation.CustomerId,
+            customerId,
+            StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ActionForbiddenException(
+                "You are not authorized to edit this group pre-order.");
+        }
+
+        var order = await _orderRepository.GetOrderByReservationIdAsync(reservationId);
+        if (order is null)
+        {
+            return false;
+        }
+
+        if (order.Status != OrderStatus.Created)
+        {
+            throw new ValidationException(
+                $"Group pre-order cannot update an order with status '{order.Status}'.");
+        }
+
+        var removed = order.Dishes.RemoveAll(d => d.DishId == dishId) > 0;
+        if (removed)
+        {
+            await _orderRepository.SaveOrderAsync(order);
+        }
+
+        return removed;
     }
 
     public async Task UnSubmitPreOrderAsync(string customerId, string reservationId, ILambdaContext context)

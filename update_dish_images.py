@@ -61,7 +61,7 @@ for dish, path in plans:
     payload = {
         "name": dish["name"],
         "description": dish["description"],
-        "dishType": dish["dishType"],
+        "dishType": dish["dishType"].replace(" ", ""),
         "price": dish["price"],
         "weight": dish["weight"],
         "calories": dish["calories"],

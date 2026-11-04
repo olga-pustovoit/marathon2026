@@ -1,0 +1,57 @@
+<article class="participant-card">
+  <header class="participant-header">
+    <h2>{{ isMe() ? 'My Pre-Order' : participant().type + ': ' + participant().name }}</h2>
+
+    <span
+      class="participant-status"
+      [class.submitted]="participant().isSubmitted"
+    >
+      {{ participant().isSubmitted ? 'Submitted' : 'Still choosing' }}
+    </span>
+  </header>
+
+  @if (participant().items.length > 0) {
+    <ul class="dish-list">
+      @for (item of participant().items; track item.dish.id) {
+        <li class="dish-item">
+          <img
+            [src]="item.dish.imageUrl || 'assets/img/dishes/spring-salad.jpg'"
+            [alt]="item.dish.name"
+            width="40"
+            height="40"
+          />
+
+          <div class="dish-info">
+            <span class="dish-name">{{ item.dish.name }}</span>
+            @if (item.dish.weight) {
+              <span class="dish-weight">{{ item.dish.weight }}</span>
+            }
+          </div>
+
+          <span class="dish-quantity">× {{ item.quantity }}</span>
+          <span class="dish-price">
+            {{ item.dish.price * item.quantity | currency:'USD':'symbol':'1.2-2' }}
+          </span>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="empty-cart">No dishes yet</p>
+  }
+
+  <footer class="participant-footer">
+    <span>Subtotal</span>
+    <strong>{{ participant().total | currency:'USD':'symbol':'1.2-2' }}</strong>
+  </footer>
+
+  @if (canRemove()) {
+    <button
+      type="button"
+      class="remove-button"
+      [attr.aria-label]="'Remove ' + participant().name"
+      (click)="onRemove()"
+    >
+      Remove Guest
+    </button>
+  }
+</article>

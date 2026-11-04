@@ -1,58 +1,70 @@
-<div class="submitted-order-item">
-  <div class="text">
-    <span class="body-bold">
-      Pre-order #{{ order().orderId }}
-      ({{ order().reservationAddress }}, {{ order().reservationTime }})
-    </span>
-
-    @for (item of order().orderItems; track item.dish.id) {
-    <div class="order-item">
-      <span class="body">
-    {{ item.quantity }}× {{ item.dish.name }}
-
-    @switch (item.state) {
-    @case (0) {
-    <span class="body status-pending">
-      (Pending)
-    </span>
-    }
-
-    @case (1) {
-    <span class="body status-confirmed">
-      (Confirmed)
-    </span>
-    }
-
-    @case (2) {
-    <span class="body status-rejected">
-      (Rejected)
-    </span>
-    }
-
-    @default {
-    <span class="body status-unknown">
-      (Unknown)
-    </span>
-    }
-    }
-    </span>
-
-    <span class="body-bold">
-    {{ item.dish.price * item.quantity | currency }}
-    </span>
-  </div>
-    }
-
-    <div class="order-item">
-      <span class="body">Total price</span>
-      <h3>{{ totalPrice() | currency }}</h3>
+<article class="submitted-order-card">
+  <header class="order-header">
+    <div>
+      <span class="eyebrow">Your order</span>
+      <h3>Pre-order</h3>
     </div>
+    <span class="order-status">Submitted</span>
+  </header>
+
+  <div class="reservation-info">
+    <div>
+      <span class="detail-label">Restaurant address</span>
+      <strong>{{ order().reservationAddress }}</strong>
+    </div>
+    <div>
+      <span class="detail-label">Reservation date & time</span>
+      <strong>{{ order().reservationTime }}</strong>
+    </div>
+  </div>
+
+  <div class="dish-list">
+    @for (item of order().orderItems; track item.dish.id) {
+      <div class="dish-row">
+        <img
+          class="dish-image"
+          [src]="item.dish.imageUrl || 'assets/img/dish.png'"
+          [alt]="item.dish.name"
+          width="64"
+          height="64"
+        />
+
+        <div class="dish-info">
+          <strong class="dish-name">{{ item.dish.name }}</strong>
+
+          @switch (item.state) {
+            @case (0) {
+              <span class="dish-status status-pending">Pending</span>
+            }
+            @case (1) {
+              <span class="dish-status status-confirmed">Confirmed</span>
+            }
+            @case (2) {
+              <span class="dish-status status-rejected">Rejected</span>
+            }
+            @default {
+              <span class="dish-status status-unknown">Unknown</span>
+            }
+          }
+
+          <div class="dish-details">
+            <span>{{ item.quantity }} × {{ item.dish.price | currency }}</span>
+            <strong>{{ item.dish.price * item.quantity | currency }}</strong>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="order-total">
+    <span>Total payment</span>
+    <strong>{{ totalPrice() | currency }}</strong>
   </div>
 
   <div class="actions">
     <button
       type="button"
-      class="button button--secondary button--large"
+      class="button button--secondary"
       (click)="cancelOrder()"
     >
       Cancel Pre-order
@@ -60,10 +72,10 @@
 
     <button
       type="button"
-      class="button button--primary button--large"
+      class="button button--primary"
       (click)="editOrder()"
     >
       Edit Pre-order
     </button>
   </div>
-</div>
+</article>

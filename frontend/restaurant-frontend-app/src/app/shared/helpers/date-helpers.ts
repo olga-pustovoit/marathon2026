@@ -52,7 +52,7 @@ export function revertFormatDate(dateStr: string): string {
 export function generateDateOptions(): string[] {
   const today = new Date();
   const dateOptions: string[] = [];
-  if (today.getHours() >= 21 && today.getMinutes() > 15) {
+  if (today.getHours() >= 22) {
     today.setDate(today.getDate() + 1); // If it's past 10 PM, start from tomorrow
   }
 

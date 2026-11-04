@@ -17,4 +17,9 @@ public interface IGroupReservationService
     Task<GetGroupInviteTokenResponse> GetGroupReservationInviteTokenAsync(string reservationId);
     Task<string?> GetOwnerSessionIdAsync(string userId, string reservationId);
     Task<List<OrderItem>> SubmitGroupPreOrderAsync(string userId, string groupReservationId, string reservationId);
+    Task RemoveParticipantDishAsync(
+        string userId,
+        string groupReservationId,
+        string guestSessionId,
+        string dishId);
 }

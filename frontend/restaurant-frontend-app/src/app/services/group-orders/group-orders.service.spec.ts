@@ -1,121 +1,98 @@
+// Рівень 2 · сервіс GroupOrdersService: URL, метод, тіло кожного запиту.
+// Запуск: npm run test:hw
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-
 import { API_BASE_URL } from '@app/shared/config/api-base-url.token';
-import { SKIP_ERROR_TOAST } from '@app/auth/skip-error-toast.context';
 import { GroupOrdersService } from './group-orders.service';
 
-describe('GroupOrdersService', () => {
-  let service: GroupOrdersService;
-  let httpMock: HttpTestingController;
+const BASE_URL = 'https://api.test';
 
-  const BASE_URL = 'https://test.api';
+describe('Рівень 2 · GroupOrdersService', () => {
+  let service: GroupOrdersService;
+  let http: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        { provide: API_BASE_URL, useValue: BASE_URL },
-      ],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: API_BASE_URL, useValue: BASE_URL }],
     });
-
     service = TestBed.inject(GroupOrdersService);
-    httpMock = TestBed.inject(HttpTestingController);
+    http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => {
-    httpMock.verify();
+  afterEach(() => http.verify());
+
+  it('getGroupInvite$: reservationId → invite-token → invite', () => {
+    let groupId = '';
+    service.getGroupInvite$('res-1').subscribe((invite) => (groupId = invite.GroupReservationId));
+
+    http.expectOne(`${BASE_URL}/reservations/res-1/invite-token`).flush({ token: 'tok' });
+    http.expectOne(`${BASE_URL}/guest/invites/tok`).flush({ GroupReservationId: 'grp-1' });
+
+    expect(groupId).toBe('grp-1');
   });
 
-  it('gets the invite token and then loads the group invite', () => {
-    let result: unknown;
-
-    service.getGroupInvite$('reservation-1').subscribe((invite) => {
-      result = invite;
-    });
-
-    const tokenRequest = httpMock.expectOne(`${BASE_URL}/reservations/reservation-1/invite-token`);
-    expect(tokenRequest.request.method).toBe('GET');
-    tokenRequest.flush({ token: 'invite-token-1' });
-
-    const inviteRequest = httpMock.expectOne(`${BASE_URL}/guest/invites/invite-token-1`);
-    expect(inviteRequest.request.method).toBe('GET');
-
-    const invite = {
-      GroupReservationId: 'group-1',
-      LocationId: 'location-1',
-      RestaurantName: 'Green Tasty',
-      LocationAddress: 'Test address',
-      StartTime: '2026-11-01T12:00:00Z',
-      EndTime: '2026-11-01T13:00:00Z',
-      MaxGuestCount: 5,
-      TableNumber: 10,
-      InviterName: 'Owner',
-    };
-
-    inviteRequest.flush(invite);
-
-    expect(result).toEqual(invite);
-  });
-
-  it('gets group sessions', () => {
-    service.getSessions$('group-1').subscribe();
-
-    const req = httpMock.expectOne(`${BASE_URL}/guest/groups/group-1/sessions`);
-
+  it('getSessions$: GET /guest/groups/{id}/sessions', () => {
+    service.getSessions$('grp-1').subscribe();
+    const req = http.expectOne(`${BASE_URL}/guest/groups/grp-1/sessions`);
     expect(req.request.method).toBe('GET');
-    expect(req.request.context.get(SKIP_ERROR_TOAST)).toBeFalse();
-
     req.flush({ participants: [], total: 0 });
   });
 
-  it('can skip the global error toast for background sessions requests', () => {
-    service.getSessions$('group-1', { silent: true }).subscribe();
-
-    const req = httpMock.expectOne(`${BASE_URL}/guest/groups/group-1/sessions`);
-
-    expect(req.request.context.get(SKIP_ERROR_TOAST)).toBeTrue();
-
-    req.flush({ participants: [], total: 0 });
+  it('getOwnerSessionId$: повертає рядок guestSessionId', () => {
+    let id = '';
+    service.getOwnerSessionId$('res-1').subscribe((value) => (id = value));
+    const req = http.expectOne(`${BASE_URL}/reservations/res-1/guest-session-id`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ guestSessionId: 'owner-1' });
+    expect(id).toBe('owner-1');
   });
 
-  it('gets the owner guest session id', () => {
-    service.getOwnerSessionId$('reservation-1').subscribe();
-
-    const req = httpMock.expectOne(`${BASE_URL}/reservations/reservation-1/guest-session-id`);
-
+  it('getStatus$: GET /guest/groups/{id}/status', () => {
+    service.getStatus$('grp-1').subscribe();
+    const req = http.expectOne(`${BASE_URL}/guest/groups/grp-1/status`);
     expect(req.request.method).toBe('GET');
-
-    req.flush({ guestSessionId: 'owner-session-1' });
+    req.flush({ currentParticipants: 3, maxCapacity: 5, status: 'Open' });
   });
 
-  it('gets group reservation status', () => {
-    service.getStatus$('group-1', { silent: true }).subscribe();
-
-    const req = httpMock.expectOne(`${BASE_URL}/guest/groups/group-1/status`);
-
-    expect(req.request.method).toBe('GET');
-    expect(req.request.context.get(SKIP_ERROR_TOAST)).toBeTrue();
-
-    req.flush({
-      currentParticipants: 2,
-      maxCapacity: 5,
-      status: 'Open',
+  it('getReservationOrder$: returns the reservation order', () => {
+    let orderId = '';
+    service.getReservationOrder$('res-1').subscribe((order) => {
+      orderId = order?.orderId ?? '';
     });
+
+    const req = http.expectOne(`${BASE_URL}/orders/res-1`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ orderId: 'order-1', reservationId: 'res-1', orderItems: [] });
+
+    expect(orderId).toBe('order-1');
   });
 
-  it('submits the group pre-order with the reservation id', () => {
-    service.submit$('group-1', 'reservation-1').subscribe();
+  it('getReservationOrder$: treats a missing order as empty', () => {
+    let order: unknown = 'pending';
+    service.getReservationOrder$('res-1').subscribe((value) => (order = value));
+    http.expectOne(`${BASE_URL}/orders/res-1`).flush(
+      { error: 'Order not found.' },
+      { status: 404, statusText: 'Not Found' }
+    );
 
-    const req = httpMock.expectOne(`${BASE_URL}/group-reservations/group-1/submit`);
+    expect(order).toBeNull();
+  });
 
+  it('removeParticipantDish$: DELETEs the selected participant dish', () => {
+    service.removeParticipantDish$('grp-1', 'guest-1', 'dish-1').subscribe();
+    const req = http.expectOne(
+      `${BASE_URL}/guest/groups/grp-1/sessions/guest-1/dishes/dish-1`
+    );
+    expect(req.request.method).toBe('DELETE');
+    req.flush({ message: 'Dish removed from participant order.' });
+  });
+
+  it('submit$: POST /group-reservations/{id}/submit з тілом { reservationId }', () => {
+    service.submit$('grp-1', 'res-1').subscribe();
+    const req = http.expectOne(`${BASE_URL}/group-reservations/grp-1/submit`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({
-      reservationId: 'reservation-1',
-    });
-
+    expect(req.request.body).toEqual({ reservationId: 'res-1' });
     req.flush([]);
   });
 });

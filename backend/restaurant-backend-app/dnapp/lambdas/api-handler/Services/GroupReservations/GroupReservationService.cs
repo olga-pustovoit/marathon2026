@@ -221,26 +221,30 @@ public class GroupReservationService(
                 "You are not authorized to submit this group pre-order.");
         }
 
-        // 7. Take only submitted guest sessions
+        // 7. Take only submitted sessions
         var submittedSessions = sessions
-            .Where(s => s.IsSubmitted && !s.IsOwnerSession)
+            .Where(s => s.IsSubmitted)
             .ToList();
 
-        if (submittedSessions.Count == 0)
+        var existingOrder = await orderService.GetOrderByReservationIdAsync(reservationId);
+
+        if (submittedSessions.Count == 0 &&
+            (existingOrder?.Dishes == null || existingOrder.Dishes.Count == 0))
         {
             throw new ValidationException(
-                "There are no submitted guest sessions.");
+                "There are no submitted sessions.");
         }
 
-        // 8. Collect dishes
+        // 8. Include the owner's existing reservation order with submitted session dishes
         var allDishes = submittedSessions
             .SelectMany(s => s.Dishes ?? [])
+            .Concat(existingOrder?.Dishes ?? [])
             .ToList();
 
         if (allDishes.Count == 0)
         {
             throw new ValidationException(
-                "Submitted guest sessions contain no dishes.");
+                "Submitted sessions contain no dishes.");
         }
 
         // 9. Combine identical dishes
@@ -257,7 +261,7 @@ public class GroupReservationService(
         if (combinedDishes.Any(d => d.Quantity <= 0))
         {
             throw new ValidationException(
-                "Invalid dish quantity in submitted guest sessions.");
+                "Invalid dish quantity in submitted sessions.");
         }
 
         // 10. Create or update group order
@@ -273,6 +277,72 @@ public class GroupReservationService(
         await groupReservationRepository.SaveGroupReservationAsync(group);
 
         return combinedDishes;
+    }
+
+    public async Task RemoveParticipantDishAsync(
+        string userId,
+        string groupReservationId,
+        string guestSessionId,
+        string dishId)
+    {
+        var group = await groupReservationRepository
+            .GetGroupReservationByIdAsync(groupReservationId)
+            ?? throw new GroupReservationNotFoundException();
+
+        if (group.Status != GroupReservationStatus.Open)
+        {
+            throw new ValidationException(
+                "Dishes can only be removed while the group reservation is open.");
+        }
+
+        var reservation = await reservationRepository
+            .GetReservationByIdAsync(group.ReservationId)
+            ?? throw new ReservationNotFoundException(
+                $"Reservation {group.ReservationId} was not found.");
+
+        if (!string.Equals(
+            reservation.CustomerId,
+            userId,
+            StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ActionForbiddenException(
+                "Only the reservation owner can remove a dish.");
+        }
+
+        var session = await guestSessionRepository.GetByGuestSessionId(guestSessionId)
+            ?? throw new GuestSessionNotFoundException(
+                $"Guest session {guestSessionId} was not found.");
+
+        if (session.GroupReservationId != groupReservationId)
+        {
+            throw new ValidationException(
+                "Guest session does not belong to this group reservation.");
+        }
+
+        if (session.IsOwnerSession &&
+            !string.Equals(session.OwnerUserId, userId, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ActionForbiddenException(
+                "You are not authorized to edit this owner session.");
+        }
+
+        var removedFromSession = session.Dishes.RemoveAll(d => d.DishId == dishId) > 0;
+        var removedFromOrder = session.IsOwnerSession &&
+            await orderService.RemoveGroupPreOrderDishAsync(
+                userId,
+                reservation.Id,
+                dishId);
+
+        if (!removedFromSession && !removedFromOrder)
+        {
+            throw new DishNotFoundException(
+                $"Dish {dishId} was not found in this participant's order.");
+        }
+
+        if (removedFromSession)
+        {
+            await guestSessionRepository.SaveAsync(session);
+        }
     }
 
     private async Task EnsureOwnerSessionAsync(
@@ -338,5 +408,3 @@ public class GroupReservationService(
     }
 
 }
-
-

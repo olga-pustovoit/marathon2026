@@ -1,0 +1,153 @@
+@if (loading) {
+  <main class="group-order-page">
+    <p>Loading group reservation...</p>
+  </main>
+} @else if (errorMessage) {
+  <main class="group-order-page">
+    <section class="summary-card">
+      <h1>{{ errorMessage }}</h1>
+      <button type="button" (click)="load()">Try again</button>
+    </section>
+  </main>
+} @else {
+  <main class="group-order-page">
+    <header class="page-header">
+      <div>
+        <span class="eyebrow">Green & Tasty</span>
+        <h1>Group Pre-Order</h1>
+        <p class="subtitle">Manage your group reservation and pre-orders.</p>
+
+        @if (updatedAtLabel) {
+          <p class="updated-at">Updated at {{ updatedAtLabel }}</p>
+        }
+
+        @if (refreshErrorMessage) {
+          <p class="refresh-error">{{ refreshErrorMessage }}</p>
+        }
+      </div>
+
+      <div class="header-actions">
+        <button
+          type="button"
+          class="refresh-button"
+          (click)="refresh()"
+        >
+          Refresh
+        </button>
+
+        <span class="status-badge">{{ statusLabel }}</span>
+      </div>
+    </header>
+
+    <section class="reservation-card">
+      <div class="reservation-heading">
+        <div>
+          <span class="eyebrow">Your reservation</span>
+          <h2>Green & Tasty</h2>
+        </div>
+        <span class="guest-count">{{ guestCount }}</span>
+      </div>
+
+      <p class="address">{{ invite?.LocationAddress }}</p>
+      <p class="date">{{ reservationDate }}</p>
+    </section>
+
+    @if (pendingCount > 0) {
+      <section class="pending-banner">
+        {{ pendingCount }} participant{{ pendingCount > 1 ? 's' : '' }}
+        hasn’t submitted their cart yet — their dishes won't be included in the order
+      </section>
+    }
+
+    <section class="participants-section">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Group overview</span>
+          <h2>Participants</h2>
+        </div>
+        <span class="participant-count">
+          {{ participants.length }} participants
+        </span>
+      </div>
+
+      @if (participants.length > 0) {
+        <ul class="participant-list">
+          @for (participant of participants; track participant.id) {
+            <li>
+              <app-participant-card
+                [participant]="participant"
+                [isMe]="isOwner(participant)"
+              />
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="summary-card">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Order summary</span>
+          <h2>Group pre-order summary</h2>
+        </div>
+      </div>
+
+      @if (hasSubmittedDishes) {
+        <ul class="consolidated-list">
+          @for (item of consolidatedDishes; track item.dish.id) {
+            <li>
+              <span>{{ item.dish.name }} × {{ item.quantity }}</span>
+              <strong>
+                {{ item.dish.price * item.quantity | currency:'USD':'symbol':'1.2-2' }}
+              </strong>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p>Participants haven’t added any dishes yet</p>
+      }
+
+      <div class="total-row">
+        <span>Grand Total</span>
+        <strong>{{ grandTotal | currency:'USD':'symbol':'1.2-2' }}</strong>
+      </div>
+
+      @if (!submitted && status !== 'Submitted') {
+        <button
+          type="button"
+          class="submit-button"
+          [disabled]="!hasSubmittedDishes || submitting"
+          (click)="openSubmitModal()"
+        >
+          Submit Pre-Order
+        </button>
+      }
+    </section>
+
+    @if (showSubmitModal) {
+      <app-modal
+        title="Review & Confirm Pre-Order"
+        (closed)="closeSubmitModal()"
+      >
+        <p>Are you sure you want to submit this group pre-order to the restaurant?</p>
+
+        <div modal-actions>
+          <button
+            type="button"
+            (click)="closeSubmitModal()"
+            [disabled]="submitting"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="confirmSubmit()"
+            [disabled]="submitting"
+          >
+            {{ submitting ? 'Submitting…' : 'Submit' }}
+          </button>
+        </div>
+      </app-modal>
+    }
+  </main>
+}

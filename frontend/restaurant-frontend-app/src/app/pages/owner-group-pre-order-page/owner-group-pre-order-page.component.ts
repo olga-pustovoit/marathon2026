@@ -4,7 +4,8 @@ import { ActivatedRoute } from '@angular/router';
 import { forkJoin, switchMap } from 'rxjs';
 
 import { GuestInvite } from '@app/models/reservations/guest-invite.model';
-import { Participant } from '@app/models/group-orders/participant.model';
+import { Participant, ParticipantItem } from '@app/models/group-orders/participant.model';
+import { Order } from '@app/models/orders/order.model';
 import { GroupStatusResponse } from '@app/models/group-orders/group-status.model';
 import { GroupOrdersService } from '@app/services/group-orders/group-orders.service';
 
@@ -23,10 +24,12 @@ export class OwnerGroupPreOrderPageComponent {
 
   readonly invite = signal<GuestInvite | null>(null);
   readonly participants = signal<Participant[]>([]);
+  readonly reservationOrder = signal<Order | null>(null);
   readonly status = signal<GroupStatusResponse | null>(null);
   readonly ownerSessionId = signal('');
   readonly inviteUrl = signal('');
   readonly deletingGuestId = signal('');
+  readonly deletingDishKey = signal('');
   readonly deleteError = signal('');
 
   readonly loading = signal(true);
@@ -41,11 +44,11 @@ export class OwnerGroupPreOrderPageComponent {
   );
 
   readonly submittedParticipants = computed(() =>
-    this.participants().filter((participant) => participant.isSubmitted)
+    this.participants().filter((participant) => this.isParticipantSubmitted(participant))
   );
 
   readonly pendingParticipants = computed(() =>
-    this.participants().filter((participant) => !participant.isSubmitted)
+    this.participants().filter((participant) => !this.isParticipantSubmitted(participant))
   );
 
   readonly consolidatedItems = computed(() => {
@@ -55,7 +58,7 @@ export class OwnerGroupPreOrderPageComponent {
     >();
 
     for (const participant of this.submittedParticipants()) {
-      for (const item of participant.items) {
+      for (const item of this.participantItems(participant)) {
         const existing = dishes.get(item.dish.id);
 
         dishes.set(item.dish.id, {
@@ -72,10 +75,48 @@ export class OwnerGroupPreOrderPageComponent {
     this.consolidatedItems().reduce((total, item) => total + item.dish.price * item.quantity, 0)
   );
 
-  readonly ownerParticipant = computed(
-    () =>
-      this.participants().find((participant) => participant.id === this.ownerSessionId()) ?? null
-  );
+  participantItems(participant: Participant): ParticipantItem[] {
+    if (participant.id !== this.ownerSessionId()) {
+      return participant.items;
+    }
+
+    const items = new Map<string, ParticipantItem>();
+
+    for (const item of participant.items) {
+      items.set(item.dish.id, {
+        dish: item.dish,
+        quantity: item.quantity,
+      });
+    }
+
+    for (const orderItem of this.reservationOrder()?.orderItems ?? []) {
+      const current = items.get(orderItem.dish.id);
+      items.set(orderItem.dish.id, {
+        dish: orderItem.dish,
+        quantity: (current?.quantity ?? 0) + orderItem.quantity,
+      });
+    }
+
+    return [...items.values()];
+  }
+
+  participantTotal(participant: Participant): number {
+    return this.participantItems(participant).reduce(
+      (total, item) => total + item.dish.price * item.quantity,
+      0
+    );
+  }
+
+  isParticipantSubmitted(participant: Participant): boolean {
+    if (participant.isSubmitted) {
+      return true;
+    }
+
+    return (
+      participant.id === this.ownerSessionId() &&
+      this.participantItems(participant).length > 0
+    );
+  }
 
   constructor() {
     if (!this.reservationId) {
@@ -128,12 +169,48 @@ export class OwnerGroupPreOrderPageComponent {
       .subscribe({
         next: (response) => {
           this.participants.set(response.participants);
+          this.status.update((status) =>
+            status
+              ? { ...status, currentParticipants: Math.max(0, status.currentParticipants - 1) }
+              : status
+          );
           this.deletingGuestId.set('');
           this.successMessage.set(`${participant.name} was removed from the group order.`);
         },
         error: () => {
           this.deletingGuestId.set('');
           this.deleteError.set(`Could not remove ${participant.name}. Please try again.`);
+        },
+      });
+  }
+
+  removeDish(participant: Participant, item: ParticipantItem): void {
+    const invite = this.invite();
+    const key = `${participant.id}:${item.dish.id}`;
+
+    if (
+      !invite ||
+      this.status()?.status !== 'Open' ||
+      this.deletingDishKey()
+    ) {
+      return;
+    }
+
+    this.deletingDishKey.set(key);
+    this.deleteError.set('');
+    this.successMessage.set('');
+
+    this.groupOrdersService
+      .removeParticipantDish$(invite.GroupReservationId, participant.id, item.dish.id)
+      .subscribe({
+        next: () => {
+          this.deletingDishKey.set('');
+          this.successMessage.set(`${item.dish.name} was removed from ${participant.name}'s order.`);
+          this.loadGroupData(invite.GroupReservationId, true);
+        },
+        error: () => {
+          this.deletingDishKey.set('');
+          this.deleteError.set(`Could not remove ${item.dish.name}. Please try again.`);
         },
       });
   }
@@ -158,7 +235,9 @@ export class OwnerGroupPreOrderPageComponent {
       next: () => {
         this.submitting.set(false);
         this.successMessage.set('Group pre-order submitted successfully.');
-        this.loadGroupData(invite.GroupReservationId, false);
+        this.status.update((status) =>
+          status ? { ...status, status: 'Submitted' } : status
+        );
       },
       error: () => {
         this.submitting.set(false);
@@ -193,7 +272,7 @@ export class OwnerGroupPreOrderPageComponent {
         switchMap(({ token, owner }) =>
           forkJoin({
             invite: this.groupOrdersService.getGroupInvite$(this.reservationId),
-            ownerSessionId: [owner.guestSessionId],
+            ownerSessionId: [owner],
             inviteToken: [token.token],
           })
         )
@@ -222,10 +301,12 @@ export class OwnerGroupPreOrderPageComponent {
       status: this.groupOrdersService.getStatus$(groupReservationId, {
         silent: true,
       }),
+      order: this.groupOrdersService.getReservationOrder$(this.reservationId),
     }).subscribe({
-      next: ({ sessions, status }) => {
+      next: ({ sessions, status, order }) => {
         this.participants.set(sessions.participants);
         this.status.set(status);
+        this.reservationOrder.set(order);
         this.loading.set(false);
         this.refreshing.set(false);
       },

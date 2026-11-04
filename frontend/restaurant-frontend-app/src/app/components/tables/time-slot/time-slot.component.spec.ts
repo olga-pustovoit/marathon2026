@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { TimeSlotComponent } from './time-slot.component';
 
 describe('TimeSlotComponent', () => {
@@ -13,6 +12,10 @@ describe('TimeSlotComponent', () => {
 
     fixture = TestBed.createComponent(TimeSlotComponent);
     component = fixture.componentInstance;
+    component.timeRange = {
+      start: '2025-06-17T15:00:00Z',
+      end: '2025-06-17T16:30:00Z',
+    };
     fixture.detectChanges();
   });
 

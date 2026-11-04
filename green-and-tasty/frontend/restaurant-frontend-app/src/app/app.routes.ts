@@ -37,6 +37,15 @@ export const routes: Routes = [
     data: { authorized: true },
   },
   {
+    path: 'reservations/:reservationId/group-order',
+    canActivate: [AuthGuard],
+    data: { authorized: true },
+    loadComponent: () =>
+      import('./pages/group-order-page/group-order-page.component').then(
+        (module) => module.GroupOrderPageComponent
+      ),
+  },
+  {
     path: 'waiter-reservations',
     component: WaiterDashboardComponent,
     canActivate: [AuthGuard],

@@ -11,7 +11,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { concatMap, EMPTY, finalize, of, throwError } from 'rxjs';
+import { concatMap, EMPTY, finalize, of, tap, throwError } from 'rxjs';
 
 import { AuthenticationService } from '@app/auth/services/authentication.service';
 import { UserModel } from '@app/auth/models/user.model';
@@ -117,6 +117,24 @@ export class GeneralInformationComponent {
     const revision = ++this.imageRevision;
     this.stopReadingPhoto();
 
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const maxFileSize = 5 * 1024 * 1024;
+
+    if (!allowedTypes.includes(file.type)) {
+      this.showError('Please select a JPEG, PNG, or WebP image');
+      return;
+    }
+
+    if (file.size === 0) {
+      this.showError('Please select a non-empty image file');
+      return;
+    }
+
+    if (file.size > maxFileSize) {
+      this.showError('Image must be 5 MB or smaller');
+      return;
+    }
+
     const reader = new FileReader();
     this.activeReader = reader;
     this.isReadingPhoto.set(true);
@@ -127,15 +145,42 @@ export class GeneralInformationComponent {
       }
 
       this.activeReader = null;
-      this.isReadingPhoto.set(false);
 
       if (typeof reader.result !== 'string') {
+        this.isReadingPhoto.set(false);
         this.handlePhotoReadError();
         return;
       }
 
-      this.photoChanged = true;
-      this.profileImage.set(reader.result);
+      const imageData = reader.result;
+      const image = new Image();
+
+      image.onload = () => {
+        if (revision !== this.imageRevision) {
+          return;
+        }
+
+        this.isReadingPhoto.set(false);
+
+        if (image.naturalWidth > 4096 || image.naturalHeight > 4096) {
+          this.showError('Image dimensions must not exceed 4096 × 4096 pixels');
+          return;
+        }
+
+        this.photoChanged = true;
+        this.profileImage.set(imageData);
+      };
+
+      image.onerror = () => {
+        if (revision !== this.imageRevision) {
+          return;
+        }
+
+        this.isReadingPhoto.set(false);
+        this.showError('Please select a valid image file');
+      };
+
+      image.src = imageData;
     };
 
     reader.onerror = () => {
@@ -167,6 +212,8 @@ export class GeneralInformationComponent {
     }
 
     const { firstName, lastName } = this.userForm.getRawValue();
+    const nameChanged =
+      firstName !== user.firstName || lastName !== user.lastName;
     const imageToUpload = this.photoChanged ? this.profileImage() : null;
     const imageRevision = this.imageRevision;
     const userRevision = this.userRevision;
@@ -174,7 +221,21 @@ export class GeneralInformationComponent {
 
     this.isSaving.set(true);
 
-    this.authenticationService.editProfile(firstName, lastName)
+    const saveNames$ = nameChanged
+      ? this.authenticationService.editProfile(firstName, lastName).pipe(
+          tap((response) => {
+            if (response && userRevision === this.userRevision) {
+              this.user.update((current) =>
+                current
+                  ? { ...current, firstName, lastName }
+                  : current,
+              );
+            }
+          }),
+        )
+      : of('Profile unchanged');
+
+    saveNames$
       .pipe(
         concatMap((response) => {
           if (userRevision !== this.userRevision) {
@@ -212,7 +273,12 @@ export class GeneralInformationComponent {
             return;
           }
 
-          if (uploadingPhoto) {
+          if (uploadingPhoto && nameChanged) {
+            console.error('Failed to upload profile image', error);
+            this.showError(
+              'Your name changes were saved, but the photo upload failed. Click Save Changes to retry the photo.',
+            );
+          } else if (uploadingPhoto) {
             console.error('Failed to upload profile image', error);
             this.showError('Failed to upload profile image');
           } else {

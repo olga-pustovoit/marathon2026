@@ -1,100 +1,263 @@
 @use 'app/shared/styles/abstracts/colors' as color;
 
+:host {
+  display: block;
+  width: 100%;
+}
+
 .not-submitted-order {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.content {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.order {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.order-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.order-item-dish {
-  display: flex;
-  flex-direction: row;
-  padding: 24px;
-  gap: 16px;
-  border-radius: 8px;
-  box-shadow: 0 0 10px 4px rgba(194, 194, 194, 0.5);
-}
-
-.dish-image {
-  min-width: 96px;
-  height: 96px;
-  border-radius: 400px;
-  box-shadow: 0 0 10px 4px rgba(194, 194, 194, 0.5);
-}
-
-.container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  border-radius: 8px;
   width: 100%;
 }
 
-.details {
+.order-card {
+  padding: 1.4rem 1.5rem;
+  border-radius: 16px;
+  background: color.$neutral-0;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 5%);
+}
+
+.order-header,
+.order-total,
+.dish-actions {
   display: flex;
-  flex-direction: row;
+  align-items: center;
   justify-content: space-between;
+  gap: 1rem;
+}
+
+.order-header {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+
+  h3 {
+    margin: 0.35rem 0 0;
+    font-size: 1.2rem;
+  }
+}
+
+.eyebrow,
+.detail-label {
+  display: block;
+  color: color.$neutral-700;
+  font-size: 0.8rem;
+}
+
+.order-status {
+  padding: 0.35rem 0.65rem;
+  border-radius: 20px;
+  background: #eee9df;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.reservation-info {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.reservation-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  strong {
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+  }
+}
+
+.dish-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dish-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 1rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.dish-image {
+  display: block;
+  width: 64px;
+  height: 64px;
+  flex: 0 0 64px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #f5f2eb;
+}
+
+.dish-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
 }
 
 .dish-name {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
 }
 
-.quantity {
+.dish-caption {
+  color: color.$neutral-700;
+  font-size: 0.78rem;
+}
+
+.dish-actions {
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+}
+
+.quantity-buttons {
   display: flex;
-  flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 0.65rem;
 }
 
+.quantity-button {
+  display: grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  place-items: center;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: color.$neutral-0;
+  color: color.$neutral-900;
+  font-size: 1.1rem;
+  cursor: pointer;
 
-.total {
-  display: flex;
-  justify-content: end;
-  align-items: center;
-  gap: 16px;
+  &:hover:not(:disabled) {
+    background: color.$green-300;
+    border-color: color.$green-300;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 }
 
-.body {
-  font-size: 14px;
-  letter-spacing: 0;
-  font-weight: 300;
-  line-height: 24px;
+.quantity-value {
+  min-width: 1rem;
+  text-align: center;
+  font-size: 0.9rem;
 }
 
-.body-bold {
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 24px;
-  letter-spacing: 0;
-  vertical-align: middle;
+.dish-price {
+  font-size: 0.9rem;
+  white-space: nowrap;
 }
 
-.caption {
-  font-weight: 300;
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0;
-  vertical-align: middle;
+.icon-button {
+  display: inline-grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 2rem;
+  place-items: center;
+  padding: 0.35rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #b3261e;
+  cursor: pointer;
+
+  &:hover {
+    background: #fff0ef;
+  }
+
+  svg {
+    width: 1.15rem;
+    height: 1.15rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
+  }
+}
+
+.add-dish-button {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.button {
+  padding: 0.75rem 1.1rem;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.button--primary {
+  color: white;
+  background: color.$green-600;
+}
+
+.button--secondary {
+  color: color.$neutral-900;
+  background: color.$green-300;
+}
+
+.order-total {
+  padding-top: 1.25rem;
+  margin-top: 1rem;
+  border-top: 1px solid #ddd;
+  font-size: 1rem;
+
+  strong {
+    font-size: 1.2rem;
+  }
+}
+
+.submit-button {
+  width: 100%;
+  padding: 0.9rem 1.1rem;
+  color: white;
+  background: color.$green-600;
+  border: 0;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    filter: brightness(0.95);
+  }
+}
+
+@media (max-width: 420px) {
+  .order-card {
+    padding: 1rem;
+  }
+
+  .dish-row {
+    gap: 0.5rem;
+  }
+
+  .dish-image {
+    width: 52px;
+    height: 52px;
+    flex-basis: 52px;
+  }
+
+  .dish-remove-button {
+    width: 1.8rem;
+    height: 1.8rem;
+    flex-basis: 1.8rem;
+  }
+
+  .dish-price {
+    font-size: 0.85rem;
+  }
 }
